@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AB GAMES | O ÚLTIMO SINAL</title>
+<title>AB GAMES - O ÚLTIMO SINAL</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;background:#050608;color:white;font-family:Arial}
@@ -39,37 +39,43 @@ button{background:#087cff;color:white;border:0;padding:16px 30px;font-weight:bol
 <script type="module">
 import * as THREE from "three";
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x080b10);
-scene.fog = new THREE.Fog(0x080b10,8,38);
+// CENA
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080b10);
+scene.fog=new THREE.Fog(0x080b10,9,42);
 
-const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,80);
-camera.position.set(0,1.65,8);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,100);
+camera.position.set(0,1.65,9);
 camera.rotation.order="YXZ";
 
-const renderer = new THREE.WebGLRenderer({
+const renderer=new THREE.WebGLRenderer({
  antialias:false,
  powerPreference:"high-performance"
 });
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,1));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.1;
 document.body.appendChild(renderer.domElement);
 
+// LUZ
 scene.add(new THREE.AmbientLight(0x8290a8,.3));
 
-const luz = new THREE.PointLight(0x9bb8df,1.5,15);
-luz.position.set(0,2.7,7);
-scene.add(luz);
+const luzTeto=new THREE.PointLight(0x9bb8df,1.5,17);
+luzTeto.position.set(0,2.7,8);
+scene.add(luzTeto);
 
-const lanterna = new THREE.SpotLight(0xffffff,35,20,Math.PI/7,.45,1.5);
+// LANTERNA
+const lanterna=new THREE.SpotLight(
+ 0xffffff,35,22,Math.PI/7,.45,1.5
+);
 camera.add(lanterna);
 lanterna.target.position.set(0,0,-1);
 camera.add(lanterna.target);
 scene.add(camera);
 
+// MATERIAIS
 const pisoMat=new THREE.MeshStandardMaterial({color:0x292b2e,roughness:.95});
 const paredeMat=new THREE.MeshStandardMaterial({color:0x44434a,roughness:.95});
 const tetoMat=new THREE.MeshStandardMaterial({color:0x202127,roughness:1});
@@ -79,8 +85,11 @@ const metal=new THREE.MeshStandardMaterial({color:0x252a30,roughness:.8});
 const paredes=[];
 const objetos=[];
 
+// CRIAR CAIXAS
 function caixa(x,y,z,sx,sy,sz,mat,lista=null){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
+ const mesh=new THREE.Mesh(
+  new THREE.BoxGeometry(sx,sy,sz),mat
+ );
  mesh.position.set(x,y,z);
  scene.add(mesh);
 
@@ -93,107 +102,101 @@ function caixa(x,y,z,sx,sy,sz,mat,lista=null){
  return mesh;
 }
 
+// CASA MAIOR: 44 x 36
+caixa(0,-.15,0,44,.3,36,pisoMat);
+caixa(0,3.1,0,44,.3,36,tetoMat);
+
+// PAREDES COM COLISÃO
 function parede(x,z,sx,sz){
  caixa(x,1.5,z,sx,3,sz,paredeMat,paredes);
 }
 
-// CASA MAIOR: 30 x 24
-caixa(0,-.15,0,40,.3,32,pisoMat);
-caixa(0,3.1,0,30,.3,24,tetoMat);
-
 // PAREDES EXTERNAS
-parede(-20,0,.3,32);
-parede(20,0,.3,32);
-parede(0,-16,40,.3);
-parede(0,16,40,.3);
+parede(-22,0,.4,36);
+parede(22,0,.4,36);
+parede(0,-18,44,.4);
+parede(0,18,44,.4);
 
-parede(-5,-8.5,.3,15);
-parede(-5,8.5,.3,15);
-parede(5,-8.5,.3,15);
-parede(5,8.5,.3,15);
+// PAREDES INTERNAS COM PORTAS ABERTAS
+// Paredes verticais: abertura central de 2,4 metros
+parede(-6,-9.6,.35,16.8);
+parede(-6,9.6,.35,16.8);
+parede(6,-9.6,.35,16.8);
+parede(6,9.6,.35,16.8);
 
-// Divisórias horizontais com passagens
-parede(-12.5,0,15,.3);
-parede(12.5,0,15,.3);
+// Paredes horizontais: abertura central de 2,4 metros
+parede(-14.6,0,14.8,.35);
+parede(14.6,0,14.8,.35);
 
 // MOLDURAS DAS PORTAS
 function moldura(x,z){
- caixa(x,1.35,z-1,.12,2.7,.12,madeira);
- caixa(x,1.35,z+1,.12,2.7,.12,madeira);
- caixa(x,2.75,z,.12,.15,2,madeira);
+ caixa(x,1.35,z-1.2,.12,2.7,.12,madeira);
+ caixa(x,1.35,z+1.2,.12,2.7,.12,madeira);
+ caixa(x,2.75,z,.12,.15,2.4,madeira);
 }
-moldura(-5,0);
-moldura(5,0);
+moldura(-6,0);
+moldura(6,0);
 
 // MÓVEIS COM COLISÃO
 function movel(x,z,sx,sy,sz,mat=madeira){
  caixa(x,sy/2,z,sx,sy,sz,mat,objetos);
 }
 
-// Sala
-movel(-10,-8,4,1,1.5);
-movel(-11,-3,2,1,2);
-movel(-8,-3,1.5,.8,1);
+// SALA
+movel(-15,-11,4,1,1.5);
+movel(-17,-5,2,1,2);
+movel(-12,-5,1.5,.8,1);
+movel(-15,-14,2,.8,1);
 
-// Cozinha
-movel(10,-8,5,1,1.2);
-movel(12,-4,2,.9,2);
-movel(8,-4,2,.9,1);
+// COZINHA
+movel(15,-11,5,1,1.2);
+movel(18,-5,2,.9,2);
+movel(12,-5,2,.9,1);
+movel(15,-14,3,.9,1,metal);
 
-// Quarto
-movel(-10,8,4,.7,5);
-movel(-12,5,2,.8,2);
-movel(-8,9,2,.9,1);
+// QUARTO 1
+movel(-15,11,4,.7,5);
+movel(-18,7,2,.8,2);
+movel(-12,14,2,.9,1);
+movel(-17,14,1,1.8,1,metal);
 
-// Outro quarto
-movel(10,8,4,.7,5);
-movel(12,5,2,.8,2);
-movel(8,9,2,.9,1);
+// QUARTO 2
+movel(15,11,4,.7,5);
+movel(18,7,2,.8,2);
+movel(12,14,2,.9,1);
+movel(17,14,1,1.8,1,metal);
 
-// Corredor: armário
+// CORREDOR
 movel(0,-5,1.5,2,.8,metal);
+movel(0,5,1.5,1.5,.8);
 
- // NOVOS MÓVEIS
-movel(-14,-12,3,1,1.5);
-movel(-9,-12,2,1.5,1,metal);
-movel(14,-12,3,1,1.5);
-movel(9,-12,2,1.5,1,metal);
-
-movel(-14,12,3,1,1.5);
-movel(-9,12,2,1.5,1,metal);
-movel(14,12,3,1,1.5);
-movel(9,12,2,1.5,1,metal);
-
- // OS DOIS OLHOS VERMELHOS
-const olhoMat = new THREE.MeshStandardMaterial({
+// OLHOS VERMELHOS
+const olhoMat=new THREE.MeshStandardMaterial({
  color:0xff0000,
  emissive:0xff0000,
  emissiveIntensity:4
 });
 
 function criarOlho(z){
- const olho = new THREE.Mesh(
+ const olho=new THREE.Mesh(
   new THREE.SphereGeometry(.13,16,16),
   olhoMat
  );
- olho.position.set(-4.78,1.95,z);
+ olho.position.set(-5.78,1.95,z);
  scene.add(olho);
 }
+criarOlho(7);
+criarOlho(7.65);
 
-criarOlho(6.8);
-criarOlho(7.4);
-
-const luzOlhos = new THREE.PointLight(0xff0000,2,3);
-luzOlhos.position.set(-4.5,1.95,7.1);
+const luzOlhos=new THREE.PointLight(0xff0000,2,3);
+luzOlhos.position.set(-5.4,1.95,7.3);
 scene.add(luzOlhos);
 
-// COLISÃO DAS PAREDES E MÓVEIS
+// COLISÃO
 const raio=.32;
 
 function colidiu(x,z){
- const listas=[...paredes,...objetos];
-
- for(const p of listas){
+ for(const p of paredes){
   if(
    x+raio>p.minX &&
    x-raio<p.maxX &&
@@ -201,18 +204,31 @@ function colidiu(x,z){
    z-raio<p.maxZ
   )return true;
  }
+
+ for(const p of objetos){
+  if(
+   x+raio>p.minX &&
+   x-raio<p.maxX &&
+   z+raio>p.minZ &&
+   z-raio<p.maxZ
+  )return true;
+ }
+
  return false;
 }
 
 // CONTROLES
 const teclas={};
-let yaw=0,pitch=0,iniciado=false;
+let yaw=0;
+let pitch=0;
+let iniciado=false;
 
 addEventListener("keydown",e=>teclas[e.code]=true);
 addEventListener("keyup",e=>teclas[e.code]=false);
 
 document.addEventListener("mousemove",e=>{
  if(!iniciado||document.pointerLockElement!==document.body)return;
+
  yaw-=e.movementX*.002;
  pitch-=e.movementY*.002;
  pitch=Math.max(-1.35,Math.min(1.35,pitch));
@@ -239,25 +255,33 @@ function atualizar(){
  if(!iniciado)return;
 
  let frente=0,lado=0;
+
  if(teclas.KeyW||teclas.ArrowUp)frente++;
  if(teclas.KeyS||teclas.ArrowDown)frente--;
  if(teclas.KeyD||teclas.ArrowRight)lado++;
  if(teclas.KeyA||teclas.ArrowLeft)lado--;
 
  const tamanho=Math.hypot(frente,lado);
- if(tamanho){frente/=tamanho;lado/=tamanho;}
+ if(tamanho>0){
+  frente/=tamanho;
+  lado/=tamanho;
+ }
 
  const velocidade=(teclas.ShiftLeft||teclas.ShiftRight?4.5:2.8)*delta;
 
  const dx=(-Math.sin(yaw)*frente+Math.cos(yaw)*lado)*velocidade;
  const dz=(-Math.cos(yaw)*frente-Math.sin(yaw)*lado)*velocidade;
 
- // Testa cada eixo separadamente
+ // TESTAR COLISÃO EM CADA EIXO
  const nx=camera.position.x+dx;
- if(!colidiu(nx,camera.position.z))camera.position.x=nx;
+ if(!colidiu(nx,camera.position.z)){
+  camera.position.x=nx;
+ }
 
  const nz=camera.position.z+dz;
- if(!colidiu(camera.position.x,nz))camera.position.z=nz;
+ if(!colidiu(camera.position.x,nz)){
+  camera.position.z=nz;
+ }
 
  camera.position.y=1.65;
 }
@@ -269,6 +293,7 @@ function animar(){
 }
 animar();
 
+// REDIMENSIONAR TELA
 addEventListener("resize",()=>{
  camera.aspect=innerWidth/innerHeight;
  camera.updateProjectionMatrix();
