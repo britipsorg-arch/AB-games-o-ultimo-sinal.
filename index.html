@@ -3,230 +3,264 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AB GAMES | O ÚLTIMO SINAL</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AB GAMES | O ÚLTIMO SINAL 3D</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#030609;color:white;font-family:Arial;overflow:hidden}
-canvas{width:100vw;height:100vh;display:block}
+body{margin:0;background:#030507;color:white;font-family:Arial;overflow:hidden}
+canvas{display:block}
 #hud{position:fixed;inset:0;pointer-events:none}
-#brand{position:absolute;top:18px;left:18px;color:#54e6ff;letter-spacing:4px;font-weight:bold;text-shadow:0 0 12px #00bfff}
-#info{position:absolute;top:48px;left:18px;color:#a5cbd4;font-size:12px}
-#help{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#000b;border:1px solid #46dfff66;border-radius:8px;padding:10px 16px;text-align:center;font-size:12px;line-height:1.8;max-width:95vw;width:max-content}
-#start{position:fixed;inset:0;background:radial-gradient(ellipse,#142832,#020407 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+#brand{position:absolute;top:18px;left:18px;color:#55e5ff;letter-spacing:4px;font-weight:bold}
+#help{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:#000b;border:1px solid #55dfff66;border-radius:8px;padding:12px;text-align:center;font-size:12px;line-height:1.8}
+#cross{position:absolute;left:50%;top:50%;width:7px;height:7px;border:1px solid #bcefff;border-radius:50%;transform:translate(-50%,-50%)}
+#start{position:fixed;inset:0;background:radial-gradient(#17232b,#020407 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
 .panel{max-width:500px}
-h1{font-size:clamp(35px,8vw,65px);letter-spacing:5px;margin:15px 0;text-shadow:0 0 25px #00bfff}
-.blue{color:#52e4ff;letter-spacing:4px}
-button{background:#071923;color:#78eaff;border:1px solid #42dfff;padding:15px 28px;font-size:16px;cursor:pointer;margin-top:20px}
-.small{font-size:13px;color:#aabac3;line-height:1.6}
+h1{font-size:clamp(36px,8vw,66px);letter-spacing:5px;text-shadow:0 0 25px #00aaff}
+.blue{color:#58e5ff;letter-spacing:4px}
+button{background:#071923;color:#80eaff;border:1px solid #42dfff;padding:15px 28px;font-size:16px;cursor:pointer}
+.small{color:#aabac3;font-size:13px;line-height:1.6}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
 <div id="hud">
  <div id="brand">AB GAMES</div>
- <div id="info">O ÚLTIMO SINAL | LANTERNA LIGADA</div>
- <div id="help">W A S D — ANDAR | SHIFT — CORRER<br>← → — OLHAR | F — LANTERNA<br>ESC — LIBERAR O MOUSE</div>
+ <div id="cross"></div>
+ <div id="help">W A S D — ANDAR | SHIFT — CORRER<br>MOUSE — OLHAR | ESC — LIBERAR MOUSE</div>
 </div>
 <div id="start">
  <div class="panel">
   <div class="blue">AB GAMES APRESENTA</div>
   <h1>O ÚLTIMO<br>SINAL</h1>
-  <p>Uma casa abandonada.<br>Seis ambientes. Um mistério.</p>
-  <p class="small">ATUALIZAÇÃO 1 — A CASA</p>
+  <p>Uma casa abandonada. Um mistério esperando por você.</p>
+  <p class="small">ATUALIZAÇÃO 2 — A CASA 3D</p>
   <button id="play">ENTRAR NA CASA</button>
-  <p class="small">Explore os cômodos e procure uma saída.</p>
+  <p class="small">Clique para começar. Use o mouse para olhar ao redor.</p>
  </div>
 </div>
-<script>
-(()=>{
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-let W=innerWidth,H=innerHeight;
-function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H}
-addEventListener("resize",resize);resize();
 
-// Mapa da casa: três cômodos em cima,
-// corredor central e três cômodos embaixo.
-const width=24,height=18;
-const grid=Array.from({length:height},()=>Array(width).fill(0));
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
 
-for(let x=0;x<width;x++){
- grid[0][x]=1;grid[height-1][x]=1;
+<script type="module">
+import * as THREE from "three";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080d12);
+scene.fog=new THREE.FogExp2(0x080d12,0.045);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,60);
+camera.position.set(-5,1.65,4);
+camera.rotation.order="YXZ";
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0x75818b,0x17100b,.35));
+
+const flashlight=new THREE.SpotLight(0xe3f3ff,95,18,Math.PI/7,.55,1.3);
+flashlight.castShadow=true;
+flashlight.shadow.mapSize.set(1024,1024);
+scene.add(flashlight);
+scene.add(flashlight.target);
+
+const mats={
+ wall:new THREE.MeshStandardMaterial({color:0x343332,roughness:1}),
+ floor:new THREE.MeshStandardMaterial({color:0x403a32,roughness:1}),
+ ceiling:new THREE.MeshStandardMaterial({color:0x171a1d,roughness:1}),
+ wood:new THREE.MeshStandardMaterial({color:0x493021,roughness:.9}),
+ darkwood:new THREE.MeshStandardMaterial({color:0x211712,roughness:1}),
+ fabric:new THREE.MeshStandardMaterial({color:0x343d40,roughness:1}),
+ metal:new THREE.MeshStandardMaterial({color:0x353a3d,metalness:.5,roughness:.6}),
+ white:new THREE.MeshStandardMaterial({color:0xb6b1a3,roughness:.9})
+};
+
+function box(x,y,z,sx,sy,sz,mat,shadow=true){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
+ m.position.set(x,y,z);
+ m.castShadow=shadow;
+ m.receiveShadow=true;
+ scene.add(m);
+ return m;
 }
-for(let y=0;y<height;y++){
- grid[y][0]=1;grid[y][width-1]=1;
+
+// Casa: piso e teto.
+box(0,-.13,0,18,.25,14,mats.floor);
+box(0,3.35,0,18,.2,14,mats.ceiling);
+
+// Paredes externas.
+box(0,1.6,-7,18,3.2,.25,mats.wall);
+box(0,1.6,7,18,3.2,.25,mats.wall);
+box(-9,1.6,0,.25,3.2,14,mats.wall);
+box(9,1.6,0,.25,3.2,14,mats.wall);
+
+// Divisão entre sala e cozinha, com passagem.
+box(-.1,1.6,-5,.2,3.2,4,mats.wall);
+box(-.1,1.6,-.8,.2,3.2,1.6,mats.wall);
+
+// Divisão da área dos quartos e banheiro.
+box(-5,1.6,3,.2,3.2,8,mats.wall);
+box(1,1.6,3,.2,3.2,8,mats.wall);
+
+// Paredes internas com vãos para portas.
+box(-3,1.6,1,4,.0+3.2,.2,mats.wall);
+box(3,1.6,1,4,3.2,.2,mats.wall);
+box(-2,1.6,5,6,3.2,.2,mats.wall);
+box(5,1.6,5,8,3.2,.2,mats.wall);
+
+// Portas de madeira.
+function door(x,z,w=1.1){
+ const d=box(x,1.05,z,w,2.1,.12,mats.wood);
+ box(x+w*.38,1,z-.09,.07,.07,.06,mats.metal);
+ return d;
 }
+door(-3,1,.9);
+door(3,1,.9);
+door(-2,5,1);
+door(5,5,1);
 
-// Divisórias dos três cômodos superiores.
-for(let y=1;y<=6;y++){
- if(y!==3){grid[y][8]=1;grid[y][16]=1}
+// Móveis da sala.
+box(-6,.25,-4,2.8,.5,1.1,mats.fabric);
+box(-6,.75,-4.45,2.8,.9,.2,mats.fabric);
+box(-7.3,.35,-3.5,.2,.7,.2,mats.wood);
+box(-4.7,.35,-3.5,.2,.7,.2,mats.wood);
+box(-6,.3,-1.8,1.7,.3,1,mats.wood);
+box(-6,1.5,-6.65,2.2,1.1,.12,mats.darkwood);
+box(-6,1.5,-6.55,1.7,.8,.04,mats.metal);
+
+// Cozinha: balcões e armários.
+box(5,.65,-5.4,5,.9,1,mats.darkwood);
+box(5,1.15,-5.4,5,.12,1.05,mats.white);
+box(7.1,1.9,-6.25,1.2,1.3,.5,mats.wood);
+box(3.5,1.9,-6.25,1.2,1.3,.5,mats.wood);
+box(5,.5,-3.1,1.7,1,1.4,mats.wood);
+box(5,1.03,-3.1,1.8,.08,1.5,mats.white);
+
+// Geladeira.
+box(7.8,1.1,-4.3,.9,2.2,.9,mats.white);
+box(7.33,1.1,-3.83,.05,.7,.05,mats.metal);
+
+// Quarto 1.
+box(-7, .35,3,2.4,.5,3,mats.wood);
+box(-7,.72,1.8,2.4,.35,.35,mats.fabric);
+box(-7,1.15,1.48,2.4,.6,.2,mats.fabric);
+box(-8.3,.55,5.4,.8,1.1,.8,mats.darkwood);
+box(-7,2.3,6.5,1.3,.7,.08,mats.wood);
+
+// Quarto 2.
+box(4,.35,3,2.5,.5,3,mats.wood);
+box(4,.72,1.8,2.5,.35,.35,mats.fabric);
+box(4,1.15,1.48,2.5,.6,.2,mats.fabric);
+box(6,.55,5.4,.8,1.1,.8,mats.darkwood);
+box(4,2.3,6.5,1.3,.7,.08,mats.wood);
+
+// Banheiro.
+box(7,.3,2,1.4,.6,1.5,mats.white);
+box(7,1,2,1.4,.1,1.5,mats.white);
+box(7.5,.45,4,1.2,.9,.6,mats.white);
+box(7.5,1,.4,1.2,.1,.6,mats.white);
+
+// Iluminação fraca nos cômodos.
+function lamp(x,z){
+ const light=new THREE.PointLight(0x9eabb4,1.1,5);
+ light.position.set(x,2.8,z);
+ scene.add(light);
+ box(x,3.05,z,.5,.08,.5,mats.metal,false);
 }
+lamp(-6,-4);
+lamp(5,-4);
+lamp(-7,3.5);
+lamp(4,3.5);
+lamp(7,3);
 
-// Divisórias dos três cômodos inferiores.
-for(let y=10;y<=16;y++){
- if(y!==12){grid[y][8]=1;grid[y][16]=1}
-}
-
-// Paredes que formam o corredor central.
-for(let x=1;x<23;x++){
- if(x!==4&&x!==12&&x!==20){
-  grid[7][x]=1;
-  grid[9][x]=1;
- }
-}
-
-// Móveis e objetos que também bloqueiam passagem.
-const furniture=[
- [3,3],[5,2],[12,2],[14,4],
- [19,3],[21,5],[3,12],[5,14],
- [11,13],[13,11],[19,13],[21,15]
-];
-for(const [x,y] of furniture)grid[y][x]=2;
-
-let px=2.5,py=4.5,angle=0;
-let flash=true,playing=false;
+// Jogador.
+const playerHeight=1.65;
+let yaw=0,pitch=0;
+let started=false;
 const keys={};
-const fov=Math.PI/2.9;
 
-function blocked(x,y){
- const mx=Math.floor(x),my=Math.floor(y);
- return !grid[my]||grid[my][mx]!==0;
+function updateFlashlight(){
+ const direction=new THREE.Vector3();
+ camera.getWorldDirection(direction);
+ flashlight.position.copy(camera.position);
+ flashlight.target.position.copy(camera.position).add(direction.multiplyScalar(5));
 }
-function move(dx,dy){
- if(!blocked(px+dx,py))px+=dx;
- if(!blocked(px,py+dy))py+=dy;
+function blocked(pos){
+ // Limites exteriores.
+ if(pos.x < -8.45||pos.x > 8.45||pos.z < -6.45||pos.z > 6.45)return true;
+ // Paredes internas principais.
+ if(Math.abs(pos.x+.1)<.22 && pos.z>-7&&pos.z<-.8)return true;
+ if(Math.abs(pos.x+5)<.22&&pos.z>-7&&pos.z<7)return true;
+ if(Math.abs(pos.x-1)<.22&&pos.z>-7&&pos.z<7)return true;
+ if(Math.abs(pos.z-1)<.22&&pos.x>-5&&pos.x<1)return true;
+ if(Math.abs(pos.z-1)<.22&&pos.x>1&&pos.x<9)return true;
+ if(Math.abs(pos.z-5)<.22&&pos.x>-9&&pos.x<-5)return true;
+ if(Math.abs(pos.z-5)<.22&&pos.x>1&&pos.x<9)return true;
+ return false;
 }
-function cast(a){
- const step=.018;
- for(let d=.02;d<22;d+=step){
-  const x=px+Math.cos(a)*d;
-  const y=py+Math.sin(a)*d;
-  const mx=Math.floor(x),my=Math.floor(y);
-  if(!grid[my]||grid[my][mx]!==0)
-   return {d,x,y,type:grid[my]?.[mx]||1};
- }
- return {d:22,type:1};
+function move(dx,dz){
+ const next=camera.position.clone();
+ next.x+=dx;
+ if(!blocked(next))camera.position.x=next.x;
+ next.copy(camera.position);
+ next.z+=dz;
+ if(!blocked(next))camera.position.z=next.z;
 }
-
-function draw(){
- ctx.fillStyle="#080d13";
- ctx.fillRect(0,0,W,H);
-
- let sky=ctx.createLinearGradient(0,0,0,H/2);
- sky.addColorStop(0,"#020509");
- sky.addColorStop(1,"#29343a");
- ctx.fillStyle=sky;
- ctx.fillRect(0,0,W,H/2);
-
- let floor=ctx.createLinearGradient(0,H/2,0,H);
- floor.addColorStop(0,"#25201b");
- floor.addColorStop(1,"#08090b");
- ctx.fillStyle=floor;
- ctx.fillRect(0,H/2,W,H/2);
-
- const cols=Math.ceil(W/3),sw=W/cols;
- for(let i=0;i<cols;i++){
-  const a=angle-fov/2+i/cols*fov;
-  const hit=cast(a);
-  const d=hit.d*Math.cos(a-angle);
-  const wallHeight=Math.min(H*2,H/(d+.0001)*.76);
-  const top=(H-wallHeight)/2;
-
-  let light=flash?Math.max(.07,1-d/9):.11;
-  let base=hit.type===2?112:145;
-  const edge=(Math.abs(hit.x-Math.round(hit.x))<.04)?.82:1;
-  let shade=Math.max(3,base*light*edge/(1+d*.10));
-
-  // Textura de parede e móveis.
-  if(hit.type===2){
-   ctx.fillStyle=`rgb(${shade*1.1},${shade*.72},${shade*.38})`;
-  }else{
-   ctx.fillStyle=`rgb(${shade*.55},${shade*.78},${shade})`;
-  }
-  ctx.fillRect(i*sw,top,sw+1,wallHeight);
-
-  // Linhas suaves nas paredes.
-  if(hit.type!==2){
-   ctx.fillStyle=`rgba(180,220,230,${Math.max(0,.12-d*.008)})`;
-   ctx.fillRect(i*sw,top+wallHeight*.18,sw+1,2);
-  }
- }
-
- if(flash){
-  const vignette=ctx.createRadialGradient(W/2,H/2,20,W/2,H/2,Math.max(W,H)*.68);
-  vignette.addColorStop(0,"#00000000");
-  vignette.addColorStop(.65,"#00000018");
-  vignette.addColorStop(1,"#000000e8");
-  ctx.fillStyle=vignette;
-  ctx.fillRect(0,0,W,H);
- }else{
-  ctx.fillStyle="#000b";
-  ctx.fillRect(0,0,W,H);
- }
-
- // Retículo.
- ctx.strokeStyle="#b9f5ff99";
- ctx.lineWidth=1;
- ctx.beginPath();
- ctx.moveTo(W/2-7,H/2);ctx.lineTo(W/2+7,H/2);
- ctx.moveTo(W/2,H/2-7);ctx.lineTo(W/2,H/2+7);
- ctx.stroke();
-
- if(Math.random()<.04){
-  ctx.fillStyle="#d8faff12";
-  ctx.fillRect(0,Math.random()*H,W,2);
- }
- if(playing)requestAnimationFrame(draw);
-}
-
-function update(){
- if(!playing)return;
- const speed=keys.ShiftLeft||keys.ShiftRight?.075:.038;
- if(keys.ArrowLeft)angle-=.045;
- if(keys.ArrowRight)angle+=.045;
-
- let forward=0,side=0;
- if(keys.KeyW||keys.ArrowUp)forward+=speed;
- if(keys.KeyS||keys.ArrowDown)forward-=speed;
- if(keys.KeyA)side-=speed;
- if(keys.KeyD)side+=speed;
-
- if(forward||side){
-  move(
-   Math.cos(angle)*forward-Math.sin(angle)*side,
-   Math.sin(angle)*forward+Math.cos(angle)*side
-  );
- }
- requestAnimationFrame(update);
-}
-
 addEventListener("keydown",e=>{
  keys[e.code]=true;
- if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code))e.preventDefault();
- if(e.code==="KeyF"){
-  flash=!flash;
-  document.getElementById("info").textContent=
-  "O ÚLTIMO SINAL | LANTERNA "+(flash?"LIGADA":"DESLIGADA");
- }
+ if(["Space","ArrowUp","ArrowDown"].includes(e.code))e.preventDefault();
 });
 addEventListener("keyup",e=>keys[e.code]=false);
-
-canvas.addEventListener("click",()=>{
- if(playing&&canvas.requestPointerLock)canvas.requestPointerLock();
-});
 document.addEventListener("mousemove",e=>{
- if(playing&&document.pointerLockElement===canvas)
-  angle+=e.movementX*.0025;
+ if(document.pointerLockElement===renderer.domElement){
+  yaw-=e.movementX*.002;
+  pitch-=e.movementY*.002;
+  pitch=Math.max(-1.25,Math.min(1.25,pitch));
+  camera.rotation.set(pitch,yaw,0,"YXZ");
+ }
+});
+renderer.domElement.addEventListener("click",()=>{
+ if(started)renderer.domElement.requestPointerLock();
 });
 
-document.getElementById("play").addEventListener("click",()=>{
- playing=true;
+document.getElementById("play").onclick=()=>{
+ started=true;
  document.getElementById("start").style.display="none";
- draw();update();
+ renderer.domElement.requestPointerLock();
+};
+
+const clock=new THREE.Clock();
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.05);
+ if(started){
+  let forward=0,side=0;
+  if(keys.KeyW)forward+=1;
+  if(keys.KeyS)forward-=1;
+  if(keys.KeyD)side+=1;
+  if(keys.KeyA)side-=1;
+  const length=Math.hypot(forward,side)||1;
+  const speed=(keys.ShiftLeft||keys.ShiftRight?4.5:2.4)*dt;
+  const dx=(Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed/length;
+  const dz=(-Math.cos(yaw)*forward+Math.sin(yaw)*side)*speed/length;
+  move(dx,dz);
+  updateFlashlight();
+ }
+ renderer.render(scene,camera);
+}
+animate();
+
+addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
 });
-})();
 </script>
 </body>
 </html>
-
