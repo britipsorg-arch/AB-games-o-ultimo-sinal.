@@ -14,16 +14,11 @@ body{margin:0;overflow:hidden;background:#050608;color:white;font-family:Arial}
  flex-direction:column;text-align:center;
  background:radial-gradient(#17202b,#030405 75%);
 }
-h1{font-size:clamp(32px,7vw,65px);letter-spacing:5px;margin:10px}
+h1{font-size:clamp(32px,7vw,65px);letter-spacing:5px}
 p{color:#aab5c3}
-button{
- background:#087cff;color:white;border:0;padding:16px 30px;
- font-size:16px;font-weight:bold;cursor:pointer;border-radius:5px;
-}
-#hud{position:fixed;top:15px;left:15px;z-index:2;color:#dceaff;
- text-shadow:0 2px 5px black;font-size:13px;pointer-events:none}
-#aviso{position:fixed;bottom:18px;left:0;right:0;text-align:center;
- color:#c5d0df;font-size:12px;z-index:2;pointer-events:none}
+button{background:#087cff;color:white;border:0;padding:16px 30px;font-weight:bold;cursor:pointer}
+#hud{position:fixed;top:15px;left:15px;z-index:2;color:white;font-size:13px;pointer-events:none}
+#aviso{position:fixed;bottom:18px;left:0;right:0;text-align:center;color:#c5d0df;font-size:12px;z-index:2;pointer-events:none}
 </style>
 </head>
 <body>
@@ -38,11 +33,7 @@ button{
 <div id="aviso">W A S D — ANDAR | SHIFT — CORRER | MOUSE — OLHAR | ESC — PAUSAR</div>
 
 <script type="importmap">
-{
- "imports":{
-  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
- }
-}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
 </script>
 
 <script type="module">
@@ -50,202 +41,188 @@ import * as THREE from "three";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x080b10);
-scene.fog = new THREE.Fog(0x080b10, 5, 25);
+scene.fog = new THREE.Fog(0x080b10,8,38);
 
-const camera = new THREE.PerspectiveCamera(
- 75, window.innerWidth/window.innerHeight, 0.1, 60
-);
-camera.position.set(0,1.65,4);
-camera.rotation.order = "YXZ";
+const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,80);
+camera.position.set(0,1.65,8);
+camera.rotation.order="YXZ";
 
 const renderer = new THREE.WebGLRenderer({antialias:false});
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
 document.body.appendChild(renderer.domElement);
 
-// LUZES
-scene.add(new THREE.AmbientLight(0x8290a8,0.28));
+scene.add(new THREE.AmbientLight(0x8290a8,.3));
 
-const luzTeto = new THREE.PointLight(0x9bb8df,1.5,12);
-luzTeto.position.set(0,2.7,3);
-scene.add(luzTeto);
+const luz = new THREE.PointLight(0x9bb8df,1.5,15);
+luz.position.set(0,2.7,7);
+scene.add(luz);
 
-// LANTERNA
-const lanterna = new THREE.SpotLight(
- 0xffffff, 35, 17, Math.PI/7, 0.45, 1.5
-);
-lanterna.position.set(0,0,0);
-lanterna.target.position.set(0,0,-1);
+const lanterna = new THREE.SpotLight(0xffffff,35,20,Math.PI/7,.45,1.5);
 camera.add(lanterna);
+lanterna.target.position.set(0,0,-1);
 camera.add(lanterna.target);
 scene.add(camera);
 
-// MATERIAIS
-const pisoMat = new THREE.MeshStandardMaterial({
- color:0x292b2e, roughness:0.95
-});
-const paredeMat = new THREE.MeshStandardMaterial({
- color:0x44434a, roughness:0.95
-});
-const tetoMat = new THREE.MeshStandardMaterial({
- color:0x202127, roughness:1
-});
-const madeira = new THREE.MeshStandardMaterial({
- color:0x38271d, roughness:0.9
-});
+const pisoMat=new THREE.MeshStandardMaterial({color:0x292b2e,roughness:.95});
+const paredeMat=new THREE.MeshStandardMaterial({color:0x44434a,roughness:.95});
+const tetoMat=new THREE.MeshStandardMaterial({color:0x202127,roughness:1});
+const madeira=new THREE.MeshStandardMaterial({color:0x38271d,roughness:.9});
+const metal=new THREE.MeshStandardMaterial({color:0x252a30,roughness:.8});
 
-// PISO E TETO
-function caixa(x,y,z,sx,sy,sz,mat){
- const mesh = new THREE.Mesh(
-  new THREE.BoxGeometry(sx,sy,sz),mat
- );
+const paredes=[];
+const objetos=[];
+
+function caixa(x,y,z,sx,sy,sz,mat,lista=null){
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
  mesh.position.set(x,y,z);
  scene.add(mesh);
+
+ if(lista){
+  lista.push({
+   minX:x-sx/2,maxX:x+sx/2,
+   minZ:z-sz/2,maxZ:z+sz/2
+  });
+ }
  return mesh;
 }
 
-caixa(0,-0.15,0,18,0.3,14,pisoMat);
-caixa(0,3.1,0,18,0.3,14,tetoMat);
-
-// PAREDES COM COLISÃO AUTOMÁTICA
-const paredes = [];
-
-function parede(x,z,l,a){
- caixa(x,1.5,z,l,3,a,paredeMat);
- paredes.push({
-  minX:x-l/2,maxX:x+l/2,
-  minZ:z-a/2,maxZ:z+a/2
- });
+function parede(x,z,sx,sz){
+ caixa(x,1.5,z,sx,3,sz,paredeMat,paredes);
 }
 
-// PAREDES EXTERNAS
-parede(-9,0,0.3,14);
-parede(9,0,0.3,14);
-parede(0,-7,18,0.3);
-parede(0,7,18,0.3);
+// CASA MAIOR: 30 x 24
+caixa(0,-.15,0,30,.3,24,pisoMat);
+caixa(0,3.1,0,30,.3,24,tetoMat);
 
-// DIVISÓRIAS INTERNAS COM ABERTURAS PARA PORTAS
-// As aberturas ficam entre z = -1 e z = 1.
-parede(-3,-4,0.3,6);
-parede(-3,4,0.3,6);
-parede(3,-4,0.3,6);
-parede(3,4,0.3,6);
+// PAREDES EXTERNAS
+parede(-15,0,.3,24);
+parede(15,0,.3,24);
+parede(0,-12,30,.3);
+parede(0,12,30,.3);
+
+// DIVISÓRIAS COM ABERTURAS
+// Corredor central com portas de 2 metros
+parede(-5,-8,.3,8);
+parede(-5,8,.3,8);
+parede(5,-8,.3,8);
+parede(5,8,.3,8);
+
+// Divisórias horizontais com passagens
+parede(-10,0,10,.3);
+parede(10,0,10,.3);
 
 // MOLDURAS DAS PORTAS
 function moldura(x,z){
- caixa(x,1.35,z-1,0.12,2.7,0.12,madeira);
- caixa(x,1.35,z+1,0.12,2.7,0.12,madeira);
- caixa(x,2.75,z,0.12,0.15,2,madeira);
+ caixa(x,1.35,z-1,.12,2.7,.12,madeira);
+ caixa(x,1.35,z+1,.12,2.7,.12,madeira);
+ caixa(x,2.75,z,.12,.15,2,madeira);
 }
-moldura(-3,0);
-moldura(3,0);
+moldura(-5,0);
+moldura(5,0);
 
-// MÓVEIS SIMPLES
-function movel(x,z,sx,sy,sz){
- caixa(x,sy/2,z,sx,sy,sz,madeira);
+// MÓVEIS COM COLISÃO
+function movel(x,z,sx,sy,sz,mat=madeira){
+ caixa(x,sy/2,z,sx,sy,sz,mat,objetos);
 }
-movel(-6,-4,2.5,0.8,1.2);
-movel(6,-4,2.5,0.8,1.2);
-movel(-6,4,2,0.7,1);
-movel(6,4,2,0.7,1);
 
-// OBJETO NO CENTRO DA CASA
-caixa(0,0.5,-4,1.2,1,0.8,madeira);
+// Sala
+movel(-10,-8,4,1,1.5);
+movel(-11,-3,2,1,2);
+movel(-8,-3,1.5,.8,1);
 
-// COLISÃO
-const raio = 0.28;
+// Cozinha
+movel(10,-8,5,1,1.2);
+movel(12,-4,2,.9,2);
+movel(8,-4,2,.9,1);
 
-function bloqueado(x,z){
- for(const p of paredes){
+// Quarto
+movel(-10,8,4,.7,5);
+movel(-12,5,2,.8,2);
+movel(-8,9,2,.9,1);
+
+// Outro quarto
+movel(10,8,4,.7,5);
+movel(12,5,2,.8,2);
+movel(8,9,2,.9,1);
+
+// Corredor: armário
+movel(0,-5,1.5,2,.8,metal);
+
+// COLISÃO DAS PAREDES E MÓVEIS
+const raio=.32;
+
+function colidiu(x,z){
+ const listas=[...paredes,...objetos];
+
+ for(const p of listas){
   if(
    x+raio>p.minX &&
    x-raio<p.maxX &&
    z+raio>p.minZ &&
    z-raio<p.maxZ
-  ) return true;
+  )return true;
  }
  return false;
 }
 
 // CONTROLES
-const teclas = {};
-let yaw = 0;
-let pitch = 0;
-let iniciado = false;
+const teclas={};
+let yaw=0,pitch=0,iniciado=false;
 
-window.addEventListener("keydown",e=>{
- teclas[e.code] = true;
-});
-window.addEventListener("keyup",e=>{
- teclas[e.code] = false;
-});
+addEventListener("keydown",e=>teclas[e.code]=true);
+addEventListener("keyup",e=>teclas[e.code]=false);
 
 document.addEventListener("mousemove",e=>{
- if(!iniciado || document.pointerLockElement!==document.body)return;
- yaw -= e.movementX*0.002;
- pitch -= e.movementY*0.002;
- pitch = Math.max(-1.35,Math.min(1.35,pitch));
+ if(!iniciado||document.pointerLockElement!==document.body)return;
+ yaw-=e.movementX*.002;
+ pitch-=e.movementY*.002;
+ pitch=Math.max(-1.35,Math.min(1.35,pitch));
  camera.rotation.set(pitch,yaw,0);
 });
 
 document.getElementById("entrar").addEventListener("click",()=>{
- iniciado = true;
+ iniciado=true;
  document.getElementById("tela").style.display="none";
  document.body.requestPointerLock?.();
 });
 
 document.addEventListener("pointerlockchange",()=>{
- if(document.pointerLockElement!==document.body && iniciado){
+ if(document.pointerLockElement!==document.body&&iniciado){
   document.getElementById("tela").style.display="flex";
  }
 });
 
 // MOVIMENTO
-const relogio = new THREE.Clock();
+const relogio=new THREE.Clock();
 
 function atualizar(){
- const delta = Math.min(relogio.getDelta(),0.05);
+ const delta=Math.min(relogio.getDelta(),.05);
  if(!iniciado)return;
 
- let frente = 0;
- let lado = 0;
+ let frente=0,lado=0;
+ if(teclas.KeyW||teclas.ArrowUp)frente++;
+ if(teclas.KeyS||teclas.ArrowDown)frente--;
+ if(teclas.KeyD||teclas.ArrowRight)lado++;
+ if(teclas.KeyA||teclas.ArrowLeft)lado--;
 
- if(teclas.KeyW || teclas.ArrowUp) frente += 1;
- if(teclas.KeyS || teclas.ArrowDown) frente -= 1;
- if(teclas.KeyD || teclas.ArrowRight) lado += 1;
- if(teclas.KeyA || teclas.ArrowLeft) lado -= 1;
+ const tamanho=Math.hypot(frente,lado);
+ if(tamanho){frente/=tamanho;lado/=tamanho;}
 
- const tamanho = Math.hypot(frente,lado);
- if(tamanho>0){
-  frente/=tamanho;
-  lado/=tamanho;
- }
+ const velocidade=(teclas.ShiftLeft||teclas.ShiftRight?4.5:2.8)*delta;
 
- const velocidade = (teclas.ShiftLeft?4.2:2.5)*delta;
+ const dx=(-Math.sin(yaw)*frente+Math.cos(yaw)*lado)*velocidade;
+ const dz=(-Math.cos(yaw)*frente-Math.sin(yaw)*lado)*velocidade;
 
- const dx = (
-  -Math.sin(yaw)*frente +
-  Math.cos(yaw)*lado
- )*velocidade;
+ // Testa cada eixo separadamente
+ const nx=camera.position.x+dx;
+ if(!colidiu(nx,camera.position.z))camera.position.x=nx;
 
- const dz = (
-  -Math.cos(yaw)*frente -
-  Math.sin(yaw)*lado
- )*velocidade;
-
- // Verifica X e Z separadamente para não prender nas quinas.
- const proximoX = camera.position.x+dx;
- if(!bloqueado(proximoX,camera.position.z)){
-  camera.position.x=proximoX;
- }
-
- const proximoZ = camera.position.z+dz;
- if(!bloqueado(camera.position.x,proximoZ)){
-  camera.position.z=proximoZ;
- }
+ const nz=camera.position.z+dz;
+ if(!colidiu(camera.position.x,nz))camera.position.z=nz;
 
  camera.position.y=1.65;
 }
@@ -257,11 +234,10 @@ function animar(){
 }
 animar();
 
-// AJUSTE DA TELA
-window.addEventListener("resize",()=>{
- camera.aspect=window.innerWidth/window.innerHeight;
+addEventListener("resize",()=>{
+ camera.aspect=innerWidth/innerHeight;
  camera.updateProjectionMatrix();
- renderer.setSize(window.innerWidth,window.innerHeight);
+ renderer.setSize(innerWidth,innerHeight);
 });
 </script>
 </body>
