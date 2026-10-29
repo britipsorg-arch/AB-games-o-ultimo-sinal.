@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AB GAMES | O ÚLTIMO SINAL</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#05080c;color:white;font-family:Arial,sans-serif;overflow:hidden}
+canvas{display:block;width:100vw;height:100vh;image-rendering:pixelated}
+#hud{position:fixed;inset:0;pointer-events:none}
+#title{position:absolute;top:16px;left:16px;color:#5be7ff;font-weight:bold;letter-spacing:3px;text-shadow:0 0 12px #00bfff}
+#help{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);text-align:center;background:#000b;padding:12px 16px;border:1px solid #4ad9ff66;border-radius:8px;width:max-content;max-width:95vw;font-size:13px;line-height:1.7}
+#start{position:fixed;inset:0;background:radial-gradient(ellipse,#10212c,#020407 75%);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+.panel{max-width:520px}
+h1{font-size:clamp(32px,7vw,62px);letter-spacing:5px;margin:10px 0;color:#e9faff;text-shadow:0 0 24px #00bfff}
+.sub{color:#53dfff;letter-spacing:4px}
+button{background:#071923;color:#7ceaff;border:1px solid #42dfff;padding:15px 26px;font-size:16px;cursor:pointer;margin-top:20px}
+button:hover{background:#123444}
+.small{color:#a9b6c0;font-size:13px;line-height:1.6}
+#status{position:absolute;top:55px;left:16px;color:#b8d9e4;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div id="title">AB GAMES</div>
+  <div id="status">SINAL: INSTÁVEL　|　LANTERNA: LIGADA</div>
+  <div id="help">W A S D — MOVER　|　SHIFT — CORRER　|　← → — OLHAR<br>F — LANTERNA　|　No computador, clique no jogo para capturar o mouse.</div>
+</div>
+<div id="start">
+  <div class="panel">
+    <div class="sub">AB GAMES APRESENTA</div>
+    <h1>O ÚLTIMO<br>SINAL</h1>
+    <p>Tem alguma coisa nesta casa.<br>Você precisa encontrar a saída.</p>
+    <p class="small">Protótipo inicial • Terror e exploração em primeira pessoa</p>
+    <button id="play">ENTRAR NA CASA</button>
+    <p class="small">Use WASD para andar. No celular, use os controles na tela.</p>
+  </div>
+</div>
+<script>
+(() => {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const start=document.getElementById('start');
+let W=innerWidth,H=innerHeight;
+function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H}
+addEventListener('resize',resize);resize();
+
+const map=[
+"1111111111111111",
+"1000000000000001",
+"1011101110111101",
+"1000100000100001",
+"1110101110101101",
+"1000001000000001",
+"1011101011110101",
+"1000001000010001",
+"1011111111011101",
+"1000000000000001",
+"1111111111111111"
+];
+const cell=1;
+let px=1.5,py=1.5,angle=0,flash=true,playing=false;
+const keys={};
+const FOV=Math.PI/2.8;
+function wall(x,y){let mx=Math.floor(x),my=Math.floor(y);return !map[my]||map[my][mx]!=='0'}
+function move(dx,dy){if(!wall(px+dx,py))px+=dx;if(!wall(px,py+dy))py+=dy}
+function ray(a){
+ const step=.025;
+ for(let d=.02;d<20;d+=step){
+  const x=px+Math.cos(a)*d,y=py+Math.sin(a)*d;
+  if(wall(x,y))return {d,x,y};
+ }
+ return {d:20,x:px,y:py};
+}
+function draw(){
+ ctx.fillStyle='#090d13';ctx.fillRect(0,0,W,H);
+ let sky=ctx.createLinearGradient(0,0,0,H/2);
+ sky.addColorStop(0,'#030509');sky.addColorStop(1,'#18232a');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);
+ let floor=ctx.createLinearGradient(0,H/2,0,H);
+ floor.addColorStop(0,'#14191c');floor.addColorStop(1,'#020304');
+ ctx.fillStyle=floor;ctx.fillRect(0,H/2,W,H/2);
+ const cols=Math.max(1,Math.ceil(W/3)),sw=W/cols;
+ for(let i=0;i<cols;i++){
+  let a=angle-FOV/2+(i/cols)*FOV;
+  const hit=ray(a),d=hit.d*Math.cos(a-angle);
+  const height=Math.min(H*2,H/(d+.0001)*.72);
+  const y=(H-height)/2;
+  const edge=(Math.abs(hit.x-Math.round(hit.x))<.04||Math.abs(hit.y-Math.round(hit.y))<.04)?1:.78;
+  let light=flash?Math.max(.08,1-d/7):.12;
+  const shade=Math.max(4,Math.min(180,145*light*edge/(1+d*.12)));
+  const side=Math.abs(hit.x-Math.round(hit.x))<.04?.83:1;
+  ctx.fillStyle=`rgb(${shade*.58*side},${shade*.78*side},${shade*side})`;
+  ctx.fillRect(i*sw,y,sw+1,height);
+ }
+ if(flash){
+  const g=ctx.createRadialGradient(W/2,H*.53,10,W/2,H*.53,Math.max(W,H)*.52);
+  g.addColorStop(0,'#ffffff0a');g.addColorStop(.55,'#00000000');g.addColorStop(1,'#00000099');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ }else{ctx.fillStyle='#0009';ctx.fillRect(0,0,W,H)}
+ // Retículo
+ ctx.strokeStyle='#b9f5ff99';ctx.lineWidth=1;
+ ctx.beginPath();ctx.moveTo(W/2-7,H/2);ctx.lineTo(W/2+7,H/2);ctx.moveTo(W/2,H/2-7);ctx.lineTo(W/2,H/2+7);ctx.stroke();
+ // Ruído visual
+ if(Math.random()<.06){ctx.fillStyle='#c5faff0c';ctx.fillRect(0,Math.random()*H,W,1+Math.random()*3)}
+ if(playing)requestAnimationFrame(draw);
+}
+function update(){
+ if(!playing)return;
+ const fast=keys.Shift?0.075:0.038;
+ if(keys.ArrowLeft)angle-=.045;
+ if(keys.ArrowRight)angle+=.045;
+ let f=0,s=0;
+ if(keys.KeyW||keys.ArrowUp)f+=fast;
+ if(keys.KeyS||keys.ArrowDown)f-=fast;
+ if(keys.KeyA)s-=fast;
+ if(keys.KeyD)s+=fast;
+ if(f||s){move(Math.cos(angle)*f-Math.sin(angle)*s,Math.sin(angle)*f+Math.cos(angle)*s)}
+ requestAnimationFrame(update);
+}
+addEventListener('keydown',e=>{
+ keys[e.code]=true;
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
+ if(e.code==='KeyF'){flash=!flash;document.getElementById('status').textContent='SINAL: INSTÁVEL　|　LANTERNA: '+(flash?'LIGADA':'DESLIGADA')}
+});
+addEventListener('keyup',e=>keys[e.code]=false);
+canvas.addEventListener('click',()=>{if(playing&&canvas.requestPointerLock)canvas.requestPointerLock()});
+document.addEventListener('mousemove',e=>{if(playing&&document.pointerLockElement===canvas)angle+=e.movementX*.0025});
+document.getElementById('play').addEventListener('click',()=>{
+ playing=true;start.style.display='none';draw();update();
+});
+})();
+</script>
+</body>
+</html>
