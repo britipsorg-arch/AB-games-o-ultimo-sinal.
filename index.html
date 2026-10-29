@@ -153,6 +153,40 @@ movel(8,9,2,.9,1);
 // Corredor: armário
 movel(0,-5,1.5,2,.8,metal);
 
+ // NOVOS MÓVEIS
+movel(-14,-12,3,1,1.5);
+movel(-9,-12,2,1.5,1,metal);
+movel(14,-12,3,1,1.5);
+movel(9,-12,2,1.5,1,metal);
+
+movel(-14,12,3,1,1.5);
+movel(-9,12,2,1.5,1,metal);
+movel(14,12,3,1,1.5);
+movel(9,12,2,1.5,1,metal);
+
+ // OS DOIS OLHOS VERMELHOS
+const olhoMat = new THREE.MeshStandardMaterial({
+ color:0xff0000,
+ emissive:0xff0000,
+ emissiveIntensity:4
+});
+
+function criarOlho(z){
+ const olho = new THREE.Mesh(
+  new THREE.SphereGeometry(.13,16,16),
+  olhoMat
+ );
+ olho.position.set(-4.78,1.95,z);
+ scene.add(olho);
+}
+
+criarOlho(6.8);
+criarOlho(7.4);
+
+const luzOlhos = new THREE.PointLight(0xff0000,2,3);
+luzOlhos.position.set(-4.5,1.95,7.1);
+scene.add(luzOlhos);
+
 // COLISÃO DAS PAREDES E MÓVEIS
 const raio=.32;
 
